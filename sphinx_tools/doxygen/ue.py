@@ -30,7 +30,7 @@ def find_engine_source_modules(project_root):
     for path in glob.iglob(f'{src}/**/Public', recursive=True):
         frags = path.replace('\\', '/').split('/')
 
-        if 'ThirdParty' in path:
+        if 'ThirdParty' in path or 'Datasmith' in path:
             continue
 
         name = frags[-2]
@@ -49,6 +49,10 @@ def find_engine_plugins(project_root):
     src = os.path.join(project_root, 'Plugins')
 
     for path in glob.iglob(f'{src}/**/Source', recursive=True):
+
+        if 'ThirdParty' in path or 'Datasmith' in path:
+            continue
+
         frags = path.replace('\\', '/').split('/')
 
         name = frags[-2]
