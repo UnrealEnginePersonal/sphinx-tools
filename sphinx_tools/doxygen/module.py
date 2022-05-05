@@ -3,6 +3,7 @@ import subprocess
 from dataclasses import dataclass, field
 import tempfile
 import pkg_resources
+import copy
 
 from sphinx_tools.version import get_version
 
@@ -164,8 +165,12 @@ class GeneratorFilePerClass:
         xml_dir = os.path.join(self.mod.output, 'xml')
         xml_index = os.path.join(xml_dir, 'index.xml')
 
-        with open(xml_index, 'r') as f:
-            index = BeautifulSoup(f, "xml")
+        try:
+            with open(xml_index, 'r') as f:
+                index = BeautifulSoup(f, "xml")
+        except FileNotFoundError:
+            print(f"Missing XML file passing {xml_index}")
+            return
 
         base_dir = os.path.join(
             conf.api_out,
@@ -204,7 +209,7 @@ class GeneratorFilePerClass:
                 files=files,
             ))
 
-        import copy
+
         cats = copy.deepcopy(self.mod.cat)
         while cats:
             cat = cats.pop()
