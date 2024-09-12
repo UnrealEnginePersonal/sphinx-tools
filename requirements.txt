@@ -5,3 +5,4 @@ sphinxcontrib-bibtex
 sphinx-serve
 breathe
 exhale
+typing_extensions

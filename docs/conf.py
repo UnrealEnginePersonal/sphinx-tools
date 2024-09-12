@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-sphinx-tools documentation build configuration file.
+sphinx_tools documentation build configuration file.
 
 This file is execfile()d with the current directory set to its
 containing dir.
@@ -32,12 +32,12 @@ import sys
 
 docs_src_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, docs_src_path)
-src_path = os.path.abspath(os.path.join(docs_src_path, '..', 'sphinx-tools'))
+src_path = os.path.abspath(os.path.join(docs_src_path, '..', 'sphinx_tools'))
 sys.path.insert(0, src_path)
 src_path = os.path.abspath(os.path.join(docs_src_path, '..'))
 sys.path.insert(0, src_path)
 
-import sphinx-tools  # noqa
+import sphinx_tools
 
 # -- General configuration ------------------------------------------------
 
@@ -58,16 +58,17 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.autosummary',
     'numpydoc',
-    'sphinxcontrib.bibtex'
+    'sphinxcontrib.bibtex',
+    'breathe',
 ]
 
 autodoc_inherit_docstrings = True
 
 # General information about the project.
-project = u'sphinx-tools'
-_full_version = sphinx-tools.__version__
-author = sphinx-tools.__author__
-copyright = sphinx-tools.__copyright__
+project = u'KdsCharacter'
+_full_version = sphinx_tools.__version__
+author = sphinx_tools.__author__
+copyright = sphinx_tools.__copyright__
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -77,6 +78,12 @@ copyright = sphinx-tools.__copyright__
 release = re.sub(r'(.*?)(?:\.dev\d+)?(?:\+.*)?', r'\1', _full_version)
 # The short X.Y version.
 version = re.sub(r'(\d+)(\.\d+)?(?:\.\d+)?(?:-.*)?(?:\.post\d+)?', r'\1\2', release)
+
+breathe_projects = {
+    "KdsCharacter": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/KdsCharacter/xml"
+}
+
+breathe_default_project = "KdsCharacter"
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -92,7 +99,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -210,7 +217,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'sphinx-tools', 'sphinx-tools Documentation',
-     author, 'sphinx-tools', sphinx-tools.__descr__,
+     author, 'sphinx-tools', sphinx_tools.__descr__,
      'Miscellaneous'),
 ]
 

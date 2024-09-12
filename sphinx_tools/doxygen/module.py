@@ -1,25 +1,43 @@
-import os
-import subprocess
-from dataclasses import dataclass, field
-import tempfile
-import pkg_resources
 import copy
+import importlib.resources as resources
+import os
+import re
+import subprocess
+import tempfile
+from dataclasses import dataclass, field
+from typing import List, Union
+
+from bs4 import BeautifulSoup
+from typing_extensions import LiteralString
 
 from sphinx_tools.version import get_version
 
-from bs4 import BeautifulSoup
+
+def sanitize_filename(filename: str) -> str:
+    # Remove or replace invalid characters like < > : " / \ | ? *
+    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+
+
+def convert_union_to_str(union: Union[str, bytes, LiteralString]) -> str:
+    un_decoded: Union[str, bytes] = union.decode() if isinstance(union, bytes) else union
+    un_str: str = un_decoded if isinstance(un_decoded, str) else str(un_decoded)
+    return un_str
 
 
 @dataclass
 class Conf:
     doxygen_out = None
     docs_src = None
-    doxyfile_folder = None
     api_out = None
     projects = dict()
 
 
 conf = Conf
+# Set up configuration paths
+conf_base_dir = 'E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/'
+conf.doxygen_out = conf_base_dir
+conf.docs_src = conf_base_dir
+conf.api_out = conf_base_dir
 
 
 class Doxygen:
@@ -35,46 +53,53 @@ class Doxygen:
         '@IMAGE_PATH@': '',
     }
 
-    def generate_config(self):
-        template = pkg_resources.resource_filename(__name__, 'Doxyfile.in')
+    def generate_config(self) -> str:
+        """
+        Generate a temp Doxygen configuration file from the template
 
-        with open(template, 'r') as file:
+        :return: The path to the generated file
+        """
+        # Use importlib.resources to access the Doxyfile.in template
+        with resources.open_text(__package__, 'Doxyfile.in') as file:
             filedata = file.read()
 
         for key, value in self.values.items():
-
             if value is not None:
                 filedata = filedata.replace(key, value)
 
-        file = tempfile.NamedTemporaryFile()
-        file.write(filedata.encode('utf-8'))
-        return file
+        # create an temp file
+        file_path = tempfile.NamedTemporaryFile(delete=False).name
+
+        with open(file_path, 'w') as file:
+            file.write(filedata)
+            file_path = file.name
+            file.close()
+
+        return file_path
 
     def run(self):
-        tmpfile = self.generate_config()
-        tmpfile.flush()
-        subprocess.call(f'doxygen {tmpfile.name}', shell=True)
-        tmpfile.close()
+        temp_file_path = self.generate_config()
+
+        subprocess.call(f'doxygen {temp_file_path}', shell=True)
+        os.remove(temp_file_path)
+
 
 @dataclass
 class Module:
     name: str
-    cat: list[str]
+    cat: List[str]
     path: str
-    sources: list[str]
-    files: list[str] = field(default_factory=list)
+    sources: List[str]
+    files: List[str] = field(default_factory=list)
 
     @property
-    def output(self):
-        return os.path.join(conf.doxygen_out, *self.cat, self.name)
+    def output(self) -> str:
+        out_dir: Union[str, bytes] = os.path.join(conf.doxygen_out, *self.cat, self.name)
+        return out_dir
 
     @property
     def tagfile(self):
         return os.path.join(self.output, '_'.join(self.cat + [self.name]) + '.tag')
-
-    @property
-    def doxygen_config(self):
-        return f'{conf.doxyfile_folder}/Doxyfile_{self.name}'
 
     def doxygen(self, tag=True):
         doxy = Doxygen()
@@ -91,20 +116,26 @@ class Module:
 
         return doxy
 
-    def generate_documentation(self):
+    def generate_documentation(self, gen_doxygen=False):
         print('=' * 40)
         print(f' Generating {"/".join(self.cat)} {self.name}')
         print('-' * 40)
 
-        dox = self.doxygen()
-        dox.run()
+        if gen_doxygen:
+            dox = self.doxygen()
+            if not os.path.exists(self.output):
+                print(f'Creating API output for {self.name}')
+                # create the output directory
+                os.makedirs(self.output, exist_ok=True)
+            dox.run()
 
         GeneratorFilePerClass(self).generate_api()
         print('-' * 40)
 
     @property
-    def index_dir(self):
-        return os.path.join(conf.api_out, *self.cat)
+    def index_dir(self) -> str:
+        path: Union[str, bytes] = os.path.join(conf.api_out, *self.cat)
+        return path
 
     @property
     def index(self):
@@ -115,7 +146,7 @@ KIND_TO_DIRECTIVE = {
     'class': 'doxygenclass',
     'struct': 'doxygenstruct',
     'define': 'doxygendefine',
-    'enum':  'doxygendenum',
+    'enum': 'doxygendenum',
     'function': 'doxygenfunction',
     'interface': 'doxygeninterface',
     'typedef': 'doxygentypedef',
@@ -144,7 +175,7 @@ DOXYGEN_TOCTREE = """
 {files}
 """
 
-DOXYGEN_TOCTREE_GLOB =  """
+DOXYGEN_TOCTREE_GLOB = """
 {cat}
 {border}
 
@@ -158,10 +189,12 @@ DOXYGEN_TOCTREE_GLOB =  """
 
 
 class GeneratorFilePerClass:
-    def __init__(self, module) -> None:
+    def __init__(self, module: Module) -> None:
         self.mod = module
 
     def generate_api(self):
+        print(f'Generating API rst from xml for {self.mod.name}')
+
         xml_dir = os.path.join(self.mod.output, 'xml')
         xml_index = os.path.join(xml_dir, 'index.xml')
 
@@ -172,11 +205,13 @@ class GeneratorFilePerClass:
             print(f"Missing XML file passing {xml_index}")
             return
 
-        base_dir = os.path.join(
+        base_union: Union[LiteralString, str, bytes] = os.path.join(
             conf.api_out,
             *self.mod.cat,
             self.mod.name,
         )
+
+        base_dir: str = convert_union_to_str(base_union)
         os.makedirs(base_dir, exist_ok=True)
 
         for comp in index.find_all("compound"):
@@ -187,20 +222,40 @@ class GeneratorFilePerClass:
 
             name_tag = comp.find("name")
             name = name_tag.contents[0]
-            file = os.path.join(base_dir, name + '.rst')
+
+            file: str = os.path.join(base_dir, name + '.rst')
+            print('file -----------------')
+            print(file)
 
             self.mod.files.append(file)
-            with open(file, 'w') as out:
-                directive = KIND_TO_DIRECTIVE.get(kind, 'doxygenclass')
-                out.write(DOXYGEN_CLASS.format(
-                    name=name,
-                    border='=' * len(name),
-                    project=self.mod.name,
-                    directive=directive,
-                ))
 
-        path = os.path.join(conf.api_out, *self.mod.cat)
-        files = '\n'.join(map(lambda s: '   ' + s.replace('.rst', '').replace(path + '/', ''), self.mod.files))
+            try:
+                with open(file, 'w') as out:
+                    directive = KIND_TO_DIRECTIVE.get(kind, 'doxygenclass')
+                    out.write(DOXYGEN_CLASS.format(
+                        name=name,
+                        border='=' * len(name),
+                        project=self.mod.name,
+                        directive=directive,
+                    ))
+            except Exception as e:
+                print(f'Error writing file {file}: {e}')
+
+        path: str = convert_union_to_str(os.path.join(conf.api_out, *self.mod.cat))
+        full_path: str = path + '/'
+        print('full_path -----------------')
+        print(full_path)
+
+        # get all the files map(lambda s: '   ' + s.replace('.rst', '').replace(path + '/', ''), self.mod.files))
+        # remove .rst and path from the file name
+        files = '\n'.join(map(lambda s: '   ' + s.replace('.rst', '').replace(full_path, ''), self.mod.files))
+
+        # replace \ with / in the path
+        files = files.replace('\\', '/')
+
+        mod_index: str = self.mod.index
+        print('mod_index -----------------')
+        print(mod_index)
 
         with open(self.mod.index, 'w') as index:
             index.write(DOXYGEN_TOCTREE.format(
@@ -209,10 +264,13 @@ class GeneratorFilePerClass:
                 files=files,
             ))
 
-
         cats = copy.deepcopy(self.mod.cat)
         while cats:
             cat = cats.pop()
+            toc_tree_file = os.path.join(conf.api_out, *cats, cat + '.rst')
+            toc_tree_file_str = convert_union_to_str(toc_tree_file)
+            print('toc_tree_file_str -----------------')
+            print(toc_tree_file_str)
 
-            with open(os.path.join(conf.api_out, *cats, cat + '.rst'), 'w') as f:
+            with open(toc_tree_file_str, 'w') as f:
                 f.write(DOXYGEN_TOCTREE_GLOB.format(cat=cat, border='=' * len(cat)))

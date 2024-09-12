@@ -1,7 +1,7 @@
 .. include:: ../README.rst
 
 .. toctree::
-   :caption: API
+   :caption: KdsCharacter
    :maxdepth: 1
 
-   api
+   KdsCharacter

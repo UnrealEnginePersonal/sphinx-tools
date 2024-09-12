@@ -13,3 +13,4 @@ serve-doc:
 	sphinx-serve
 
 update-doc: build-doc serve-doc
+ sphinx-build -b html -d build/doctrees -nWT docs/ docs/build/html
