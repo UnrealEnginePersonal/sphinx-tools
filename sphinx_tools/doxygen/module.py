@@ -242,7 +242,7 @@ class GeneratorFilePerClass:
                 print(f'Error writing file {file}: {e}')
 
         path: str = convert_union_to_str(os.path.join(conf.api_out, *self.mod.cat))
-        full_path: str = path + '/'
+        full_path: str = path + '\\'
         print('full_path -----------------')
         print(full_path)
 

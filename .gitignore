@@ -74,3 +74,12 @@ docs/src/reference
 # PyBuilder
 target/
 _build/
+docs/ALS
+docs/docs
+docs/KdsCharacter
+docs/KdsEditorPlugin
+
+docs/ALS.rst
+docs/docs.rst
+docs/KdsCharacter.rst
+docs/KdsEditorPlugin.rst

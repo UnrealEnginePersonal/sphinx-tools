@@ -1,8 +1,4 @@
-sphinx-tools
+API Docs Kasper
 =============================
 
-
-.. code-block:: bash
-
-   pip install sphinx-tools
 

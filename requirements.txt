@@ -3,6 +3,8 @@ sphinx >= 1.8
 sphinx_rtd_theme
 sphinxcontrib-bibtex
 sphinx-serve
+sphinx-book-theme
+sphinx-wagtail-theme
 breathe
 exhale
 typing_extensions

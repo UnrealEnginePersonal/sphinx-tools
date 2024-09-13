@@ -1,29 +1,38 @@
-BSD 3-Clause License
-
-Copyright (c) 2019, Mila, Pierre Delaunay
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ALS/ALS.rst <- index file
+ALS/ALS/*module_docs*
+ALS/ALS/ALS_ALS.tag <- doxgen tag file
+ALS/ALS/xml/*...xml* <- doxygen xml docs
+Developer/Developer.rst <- index file
+Developer/Developer/*module_docs*
+Developer/Developer/Developer_Developer.tag <- doxgen tag file
+Developer/Developer/xml/*...xml* <- doxygen xml docs
+KantanDocGenPlugin/KantanDocGenPlugin.rst <- index file
+KantanDocGenPlugin/KantanDocGenPlugin/*module_docs*
+KantanDocGenPlugin/KantanDocGenPlugin/KantanDocGenPlugin_KantanDocGenPlugin.tag <- doxgen tag file
+KantanDocGenPlugin/KantanDocGenPlugin/xml/*...xml* <- doxygen xml docs
+KdsCharacter/KdsCharacter.rst <- index file
+KdsCharacter/KdsCharacter/*module_docs*
+KdsCharacter/KdsCharacter/KdsCharacter_KdsCharacter.tag <- doxgen tag file
+KdsCharacter/KdsCharacter/xml/*...xml* <- doxygen xml docs
+KdsEditorPlugin/KdsEditorPlugin.rst <- index file
+KdsEditorPlugin/KdsEditorPlugin/*module_docs*
+KdsEditorPlugin/KdsEditorPlugin/KdsEditorPlugin_KdsEditorPlugin.tag <- doxgen tag file
+KdsEditorPlugin/KdsEditorPlugin/xml/*...xml* <- doxygen xml docs
+KdsLogging/KdsLogging.rst <- index file
+KdsLogging/KdsLogging/*module_docs*
+KdsLogging/KdsLogging/KdsLogging_KdsLogging.tag <- doxgen tag file
+KdsLogging/KdsLogging/xml/*...xml* <- doxygen xml docs
+KdsMacroLib/KdsMacroLib.rst <- index file
+KdsMacroLib/KdsMacroLib/*module_docs*
+KdsMacroLib/KdsMacroLib/KdsMacroLib_KdsMacroLib.tag <- doxgen tag file
+KdsMacroLib/KdsMacroLib/xml/*...xml* <- doxygen xml docs
+ALS.rst
+APIDocs.rst <- index file for APIDocs (links to ALS, KantanDocGenPlugin, KdsCharacter, KdsEditorPlugin)
+conf.py
+Developer.rst
+index.rst <- index file
+KantanDocGenPlugin.rst
+KdsCharacter.rst
+KdsEditorPlugin.rst
+KdsLogging.rst
+KdsMacroLib.rst

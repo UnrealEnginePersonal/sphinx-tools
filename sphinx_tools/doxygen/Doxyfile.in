@@ -2264,7 +2264,18 @@ PREDEFINED             = DOXYGEN_DOCUMENTATION_BUILD \
                          LOCTEXT_NAMESPACE= \
                          GAMEKIT_SHADERS= \
                          IMPLEMENT_GAME_MODULE= \
-                         "IMPLEMENT_PRIMARY_GAME_MODULE(a, b, c)="
+                         "IMPLEMENT_PRIMARY_GAME_MODULE(a, b, c)=" \
+                         UFUNCTION()= \
+                         UPROPERTY()= \
+                         GENERATED_BODY()= \
+                         UCLASS()= \
+                         CESIUMRUNTIME_API= \
+                         UE_DEPRECATED()=
+                         ALS_API= \
+                         ALSCAMERA_API= \
+                         ALSEDITOR_API= \
+                         ALSEXTRAS_API= \
+                         KDSCHARACTER_API= \
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The
@@ -2330,7 +2341,7 @@ EXTERNAL_GROUPS        = YES
 # be listed.
 # The default value is: YES.
 
-EXTERNAL_PAGES         = YES
+EXTERNAL_PAGES         = NO
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool

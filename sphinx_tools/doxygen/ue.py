@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+from typing import List
 
 from sphinx_tools.doxygen.module import Module
 
@@ -23,7 +24,7 @@ def extract_category(frags, start_tag, end_tag):
     return cat
 
 
-def find_engine_source_modules(project_root):
+def find_modules(project_root):
     src = os.path.join(project_root, 'Source')
 
     for path in glob.iglob(f'{src}/**/Public', recursive=True):
@@ -31,80 +32,69 @@ def find_engine_source_modules(project_root):
 
         name = frags[-2]
         module = os.path.abspath(os.path.join(path, '..'))
-        print('module')
-        print(module)
+
         cat = extract_category(frags, 'Source', name)
         if not cat:
             cat = [name]
 
-
-        print('cat' + str(cat))
-
         yield Module(name, cat, module, [
             os.path.join(module, 'Public'),
-            os.path.join(module, 'Private'),
-            #os.path.join(module, 'Classes'),
+            os.path.join(module, 'Private')
         ])
 
 
-def find_engine_plugins(project_root):
+class PluginModel:
+    def __init__(self, name: str, path: str) -> None:
+        self.name = name
+        self.path = path
+
+    def get_modules(self) -> List[Module]:
+        return list(find_modules('E:/_00_blackdog/Docs/TestDocProject/Plugins/' + self.name))
+
+
+def find_modules_in_plugin(plugin: PluginModel) -> List[Module]:
+    return plugin.get_modules()
+
+
+def find_plugins(project_root):
     src = os.path.join(project_root, 'Plugins')
 
     for path in glob.iglob(f'{src}/**/Source', recursive=True):
         frags = path.replace('\\', '/').split('/')
-
+        path = path.replace('\\', '/')
         name = frags[-2]
-        print('name')
-        print(name)
-
-        cat = extract_category(frags, 'Plugins', name)
-        print('cat')
-        if not cat:
-            cat = [name]
-
-        print(cat)
-        yield Module(name, cat, path, [path])
+        yield PluginModel(name=name, path=path)
 
 
 def test_modules():
     namespaces = set()
-
-    for i in find_engine_source_modules('E:/_00_blackdog/Docs/TestDocProject'):
-        namespaces.add('/'.join(i.cat))
-        print(i)
-        i.generate_documentation()
-
-    for n in sorted(list(namespaces)):
-        print(n)
+    for module in find_modules('E:/_00_blackdog/Docs/TestDocProject'):
+        namespaces.add('/'.join(module.cat))
 
 
 def test_plugins():
     namespaces = set()
 
-    for i in find_engine_plugins('E:/_00_blackdog/Docs/TestDocProject'):
-        namespaces.add('/'.join(i.cat))
-        print('XX' * 60)
-        print(i.name)
-        print('XX' * 60)
-        i.generate_documentation(gen_doxygen=True)
+    for i in find_plugins('E:/_00_blackdog/Docs/TestDocProject'):
+        print(i.name, " at path ", i.path)
 
-    for n in sorted(list(namespaces)):
-        print(n)
+        if i.name == 'KdsLogging':
+            print('skipping KdsLogging')
+            continue
 
+        if i.name == 'KdsMacroLib':
+            print('skipping KdsMacroLib')
+            continue
 
-def mock_module():
-    # Module(
-    #     name='ALS', cat=[],
-    #     path='E:/_00_blackdog/Docs/TestDocProject\\Plugins\\ALS\\Source',
-    #     sources=['E:/_00_blackdog/Docs/TestDocProject\\Plugins\\ALS\\Source'], files=[]
-    # )
-    module: Module = Module(
-        name='ALS', cat=[],
-        path='E:/_00_blackdog/Docs/TestDocProject/Plugins/ALS/Source',
-        sources=['E:/_00_blackdog/Docs/TestDocProject/Plugins/ALS/Source']
-    )
+        for module in find_modules_in_plugin(i):
+            print('         module: ', module.name, ' at path ', module.path, ' in plugin ', i.name)
+            module.cat = [i.name]
+            print('         cat: ', module.cat)
+            namespaces.add('/'.join(module.cat))
+            module.generate_documentation(gen_doxygen=True)
 
-    module.generate_documentation()
+        # i.generate_documentation(gen_doxygen=True)
+
 
 if __name__ == '__main__':
     test_plugins()
