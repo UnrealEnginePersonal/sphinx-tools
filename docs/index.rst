@@ -2,24 +2,24 @@
 
 .. toctree::
    :caption: ALS
-   :maxdepth: 1
+   :maxdepth: 2
 
    ALS
 
 .. toctree::
    :caption: KdsCharacter
-   :maxdepth: 1
+   :maxdepth: 2
 
    KdsCharacter
 
 .. toctree::
    :caption: KdsEditorPlugin
-   :maxdepth: 1
+   :maxdepth: 2
 
    KdsEditorPlugin
 
 .. toctree::
    :caption: KdsLogging
-   :maxdepth: 1
+   :maxdepth: 2
 
    KdsLogging

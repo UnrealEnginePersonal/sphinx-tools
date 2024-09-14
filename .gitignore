@@ -83,3 +83,5 @@ docs/ALS.rst
 docs/docs.rst
 docs/KdsCharacter.rst
 docs/KdsEditorPlugin.rst
+/docs/api/
+/temp/

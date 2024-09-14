@@ -12,9 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
-import subprocess
-#import sphinx_wagtail_theme
+import theme_settings
+
+# import sphinx_wagtail_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -23,7 +23,6 @@ import subprocess
 PROJECT_FINAL_NAME = "ALSSixeBlackImpl"
 PROJECT_COPYRIGHT = "2021, Kasper de Bruin"
 PROJECT_AUTHOR = "Kasper de Bruin"
-
 
 # Generate the HTML in the sphinx folder so it will be made
 # available in read the docs
@@ -58,8 +57,9 @@ breathe_default_members = (
 )
 breathe_show_define_initializer = True
 breathe_show_enumvalue_initializer = True
+
 breathe_projects = {
-    "ALS":       "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALS/xml",
+    "ALS": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALS/xml",
     "ALSCamera": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSCamera/xml",
     "ALSEditor": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSEditor/xml",
     "ALSExtras": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSExtras/xml",
@@ -69,14 +69,17 @@ breathe_projects = {
 
     "KdsEditorPlugin": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/KdsEditorPlugin/KdsEditorPlugin/xml",
 }
+
 breathe_domain_by_extension = {
     "usf": "cpp",
 }
+
 exhale_args = {
     # These arguments are required
-    "containmentFolder": "./docs/APIDocs",
-    "rootFileName": "index.rst",
-    "rootFileTitle": "API Documentation",
+
+    "containmentFolder": "_build/exhale",  # We put exhale ioutside because we just use it as scafolding
+    "rootFileName": f"{breathe_default_project}_API.rst",
+    "rootFileTitle": f"{breathe_default_project} API",
     "doxygenStripFromPath": "..",
     # Suggested optional arguments
     "createTreeView": True,
@@ -88,11 +91,6 @@ primary_domain = "cpp"
 
 # Tell sphinx what the pygments highlight language should be.
 highlight_language = "cpp"
-
-# breathe_projects_source = {
-#    "myprojectsource" :
-#        ( "/some/long/path/to/myproject", [ "file.c", "subfolder/otherfile.c" ] )
-#    }
 
 # =================
 
@@ -169,30 +167,14 @@ pygments_style = "sphinx"
 todo_include_todos = False
 
 # -- Options for HTML output ----------------------------------------------
-import sphinx_wagtail_theme
-import sphinx_press_theme
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#html_theme = "sphinx_wagtail_theme"
-html_theme = 'groundwork'
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-# html_theme_options = {}
-# Add any paths that contain custom themes here, relative to this directory.
-# html_theme_path = [sphinx_wagtail_theme.get_html_theme_path()]
-
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-# html_title = None
-
+html_title = f"{PROJECT_FINAL_NAME} v{commit}"
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
-
+html_short_title = f"{PROJECT_FINAL_NAME} v{commit}"
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = None
+html_logo = f"_static/nf-logo-120x120.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -204,10 +186,16 @@ html_theme = 'groundwork'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_theme = theme_settings.CURRENT_THEME.theme_name
+html_theme_options = theme_settings.CURRENT_THEME.theme_options
+html_css_files = theme_settings.CURRENT_THEME.custom_css
+html_context = theme_settings.CURRENT_THEME.html_context
+html_show_copyright = theme_settings.CURRENT_THEME.show_copyright
+
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
-html_extra_path = ["_build/doxygen"]
+# html_extra_path =
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -238,9 +226,6 @@ html_extra_path = ["_build/doxygen"]
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 # html_show_sphinx = True
-
-# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-# html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the

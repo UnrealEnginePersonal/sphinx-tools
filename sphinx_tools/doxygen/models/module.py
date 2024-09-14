@@ -1,27 +1,15 @@
 import copy
 import importlib.resources as resources
 import os
-import re
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List
 
 from bs4 import BeautifulSoup
-from typing_extensions import LiteralString
 
+import sphinx_tools.doxygen.utils.path as path_util
 from sphinx_tools.version import get_version
-
-
-def sanitize_filename(filename: str) -> str:
-    # Remove or replace invalid characters like < > : " / \ | ? *
-    return re.sub(r'[<>:"/\\|?*]', '_', filename)
-
-
-def convert_union_to_str(union: Union[str, bytes, LiteralString]) -> str:
-    un_decoded: Union[str, bytes] = union.decode() if isinstance(union, bytes) else union
-    un_str: str = un_decoded if isinstance(un_decoded, str) else str(un_decoded)
-    return un_str
 
 
 @dataclass
@@ -67,8 +55,7 @@ class Doxygen:
             if value is not None:
                 filedata = filedata.replace(key, value)
 
-        # create an temp file
-        file_path = tempfile.NamedTemporaryFile(delete=False).name
+        file_path: str = tempfile.NamedTemporaryFile(delete=False).name
 
         with open(file_path, 'w') as file:
             file.write(filedata)
@@ -79,7 +66,6 @@ class Doxygen:
 
     def run(self):
         temp_file_path = self.generate_config()
-
         subprocess.call(f'doxygen {temp_file_path}', shell=True)
         os.remove(temp_file_path)
 
@@ -94,52 +80,72 @@ class Module:
 
     @property
     def output(self) -> str:
-        out_dir: Union[str, bytes] = os.path.join(conf.doxygen_out, *self.cat, self.name)
-        return out_dir
+        return path_util.join(conf.doxygen_out, *self.cat, self.name)
 
     @property
-    def tagfile(self):
-        return os.path.join(self.output, '_'.join(self.cat + [self.name]) + '.tag')
+    def tagfile(self) -> str:
+        return path_util.join(self.output, '_'.join(self.cat + [self.name]) + '.tag')
 
-    def doxygen(self, tag=True):
-        doxy = Doxygen()
+    @staticmethod
+    def generate_tagfile_str(files: List[str]) -> str:
+        """
+        Generate a string for the TAGFILES doxygen configuration option
 
+        Args:
+            files: A list of tag files to include in the configuration
+
+        Returns:
+            A string for the TAGFILES configuration option, and empty string if no files are provided
+
+        Example:
+            >>> Module.generate_tagfile_str(['tagfile0', 'tagfile1', 'tagfile2', 'tagfile3'])
+            TAGFILES  = "tagfile0" \n
+            TAGFILES  += "tagfile1" \n
+            TAGFILES  += "tagfile2" \n
+            TAGFILES  += "tagfile3" \n
+        """
+        if not files:
+            return "TAGFILES  = "
+
+        if len(files) == 1:
+            return f"TAGFILES  = {files[0]}=."
+        result: str = "TAGFILES  = " + files[0] + "\n"
+        for file in files[1:]:
+            result += f"TAGFILES  += {file}\n"
+
+        return result
+
+    def doxygen(self, tag: bool = True, other_tag_files: List[str] = None) -> Doxygen:
+        tag_files_conf: str = self.generate_tagfile_str(other_tag_files)
+
+        doxy: Doxygen = Doxygen()
         doxy.values['@DOXYGEN_OUTPUT_DIR@'] = self.output
         doxy.values['@CMAKE_SOURCE_DIR@'] = self.path
         doxy.values['@PROJECT_NAME@'] = self.name
         doxy.values['@rev_branch@'] = get_version()
-        doxy.values['@TAG_FILES@'] = ''
+        doxy.values['@TAG_FILES@'] = tag_files_conf
         doxy.values['@GENERATE_HTML@'] = 'NO' if tag else 'YES'
         doxy.values['@PROJECT_TAG_FILE@'] = self.tagfile if tag else ''
         doxy.values['@SOURCES@'] = ' '.join(self.sources)
-        doxy.values['@IMAGE_PATH@'] = os.path.join(conf.docs_src, '_static')
-
+        doxy.values['@IMAGE_PATH@'] = path_util.join(conf.docs_src, '_static')
         return doxy
 
-    def generate_documentation(self, gen_doxygen=False):
-        print('=' * 40)
-        print(f' Generating {"/".join(self.cat)} {self.name}')
-        print('-' * 40)
-
+    def generate_documentation(self, gen_doxygen=False, other_tag_files:List[str] =None) -> None:
         if gen_doxygen:
-            dox = self.doxygen()
-            if not os.path.exists(self.output):
-                print(f'Creating API output for {self.name}')
-                # create the output directory
+            dox: Doxygen = self.doxygen(other_tag_files=other_tag_files)
+            if not path_util.exists(self.output):
                 os.makedirs(self.output, exist_ok=True)
             dox.run()
 
         GeneratorFilePerClass(self).generate_api()
-        print('-' * 40)
 
     @property
     def index_dir(self) -> str:
-        path: Union[str, bytes] = os.path.join(conf.api_out, *self.cat)
-        return path
+        return path_util.join(conf.api_out, *self.cat)
 
     @property
-    def index(self):
-        return os.path.join(self.index_dir, self.name + '.rst')
+    def index(self) -> str:
+        return path_util.join(self.index_dir, self.name + '.rst')
 
 
 KIND_TO_DIRECTIVE = {
@@ -180,7 +186,7 @@ DOXYGEN_TOCTREE_GLOB = """
 {border}
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :glob:
 
    {cat}/*
@@ -195,8 +201,8 @@ class GeneratorFilePerClass:
     def generate_api(self):
         print(f'Generating API rst from xml for {self.mod.name}')
 
-        xml_dir = os.path.join(self.mod.output, 'xml')
-        xml_index = os.path.join(xml_dir, 'index.xml')
+        xml_dir = path_util.join(self.mod.output, 'xml')
+        xml_index = path_util.join(xml_dir, 'index.xml')
 
         try:
             with open(xml_index, 'r') as f:
@@ -205,13 +211,12 @@ class GeneratorFilePerClass:
             print(f"Missing XML file passing {xml_index}")
             return
 
-        base_union: Union[LiteralString, str, bytes] = os.path.join(
+        base_dir: str = path_util.join(
             conf.api_out,
             *self.mod.cat,
             self.mod.name,
         )
 
-        base_dir: str = convert_union_to_str(base_union)
         os.makedirs(base_dir, exist_ok=True)
 
         for comp in index.find_all("compound"):
@@ -223,10 +228,7 @@ class GeneratorFilePerClass:
             name_tag = comp.find("name")
             name = name_tag.contents[0]
 
-            file: str = os.path.join(base_dir, name + '.rst')
-            print('file -----------------')
-            print(file)
-
+            file: str = path_util.join(base_dir, name + '.rst')
             self.mod.files.append(file)
 
             try:
@@ -241,14 +243,12 @@ class GeneratorFilePerClass:
             except Exception as e:
                 print(f'Error writing file {file}: {e}')
 
-        path: str = convert_union_to_str(os.path.join(conf.api_out, *self.mod.cat))
-        full_path: str = path + '\\'
-        print('full_path -----------------')
-        print(full_path)
+        path: str = path_util.join(conf.api_out, *self.mod.cat)
 
         # get all the files map(lambda s: '   ' + s.replace('.rst', '').replace(path + '/', ''), self.mod.files))
         # remove .rst and path from the file name
-        files = '\n'.join(map(lambda s: '   ' + s.replace('.rst', '').replace(full_path, ''), self.mod.files))
+        path += '/'
+        files = '\n'.join(map(lambda s: '   ' + s.replace('.rst', '').replace(path, ''), self.mod.files))
 
         # replace \ with / in the path
         files = files.replace('\\', '/')
@@ -267,8 +267,7 @@ class GeneratorFilePerClass:
         cats = copy.deepcopy(self.mod.cat)
         while cats:
             cat = cats.pop()
-            toc_tree_file = os.path.join(conf.api_out, *cats, cat + '.rst')
-            toc_tree_file_str = convert_union_to_str(toc_tree_file)
+            toc_tree_file_str = path_util.join(conf.api_out, *cats, cat + '.rst')
             print('toc_tree_file_str -----------------')
             print(toc_tree_file_str)
 

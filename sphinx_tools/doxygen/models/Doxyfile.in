@@ -261,8 +261,8 @@ TAB_SIZE               = 4
 # with the commands \{ and \} for these it is advised to use the version @{ and
 # @} or use a double escape (\\{ and \\})
 
-ALIASES                = "rst=\verbatim embed:rst:leading-asterisk" \
-                         endrst=\endverbatim
+ALIASES                = "rst=\verbatim embed:rst:leading-asterisk"
+ALIASES                += "endrst=\endverbatim"
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C sources
 # only. Doxygen will then generate output that is more tailored for C. For
@@ -464,7 +464,7 @@ LOOKUP_CACHE_SIZE      = 0
 # DOT_NUM_THREADS setting.
 # Minimum value: 0, maximum value: 32, default value: 1.
 
-NUM_PROC_THREADS       = 1
+NUM_PROC_THREADS       = 32
 
 #---------------------------------------------------------------------------
 # Build related configuration options
@@ -510,7 +510,7 @@ EXTRACT_STATIC         = YES
 # for Java sources.
 # The default value is: YES.
 
-EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_CLASSES  = NO
 
 # This flag is only useful for Objective-C code. If set to YES, local methods,
 # which are defined in the implementation section but not in the interface are
@@ -601,13 +601,13 @@ HIDE_SCOPE_NAMES       = NO
 # YES the compound reference will be hidden.
 # The default value is: NO.
 
-HIDE_COMPOUND_REFERENCE= NO
+HIDE_COMPOUND_REFERENCE = NO
 
 # If the SHOW_HEADERFILE tag is set to YES then the documentation for a class
 # will show which file needs to be included to use the class.
 # The default value is: YES.
 
-SHOW_HEADERFILE        = NO
+SHOW_HEADERFILE        = YES
 
 # If the SHOW_INCLUDE_FILES tag is set to YES then doxygen will put a list of
 # the files that are included by a file in the documentation of that file.
@@ -999,7 +999,7 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = @CMAKE_SOURCE_DIR@/examples
+EXAMPLE_PATH           =
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
@@ -2238,7 +2238,7 @@ SEARCH_INCLUDES        = YES
 # preprocessor.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           = D:/Unreal/Engine/UE_5.4/Engine/Source
+INCLUDE_PATH           =
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
@@ -2256,26 +2256,25 @@ INCLUDE_FILE_PATTERNS  =
 # recursively expanded use the := operator instead of the = operator.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-PREDEFINED             = DOXYGEN_DOCUMENTATION_BUILD \
-                         DOXYGEN_SHOULD_SKIP_THIS \
-                         FORCEINLINE= \
-                         OUT= \
-                         UMETA= \
-                         LOCTEXT_NAMESPACE= \
-                         GAMEKIT_SHADERS= \
-                         IMPLEMENT_GAME_MODULE= \
-                         "IMPLEMENT_PRIMARY_GAME_MODULE(a, b, c)=" \
-                         UFUNCTION()= \
-                         UPROPERTY()= \
-                         GENERATED_BODY()= \
-                         UCLASS()= \
-                         CESIUMRUNTIME_API= \
-                         UE_DEPRECATED()=
-                         ALS_API= \
-                         ALSCAMERA_API= \
-                         ALSEDITOR_API= \
-                         ALSEXTRAS_API= \
-                         KDSCHARACTER_API= \
+PREDEFINED = DOXYGEN_DOCUMENTATION_BUILD
+PREDEFINED += DOXYGEN_SHOULD_SKIP_THIS
+PREDEFINED += UE_DEPRECATED(
+PREDEFINED += ALS_API=
+PREDEFINED += ALSCAMERA_API=
+PREDEFINED += ALSEDITOR_API=
+PREDEFINED += ALSEXTRAS_API=
+PREDEFINED += KDSCHARACTER_API=
+PREDEFINED += FORCEINLINE=
+PREDEFINED += OUT=
+PREDEFINED += UMETA=
+PREDEFINED += "UMETA  ="
+PREDEFINED += LOCTEXT_NAMESPACE=
+PREDEFINED += IMPLEMENT_GAME_MODULE=
+PREDEFINED += "IMPLEMENT_PRIMARY_GAME_MODULE(a, b, c)="
+PREDEFINED += UCLASS()=
+PREDEFINED += UFUNCTION()=
+PREDEFINED += UPROPERTY()=
+PREDEFINED += GENERATED_BODY()=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The
@@ -2313,7 +2312,7 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = @TAG_FILES@
+@TAG_FILES@
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
@@ -2341,7 +2340,7 @@ EXTERNAL_GROUPS        = YES
 # be listed.
 # The default value is: YES.
 
-EXTERNAL_PAGES         = NO
+EXTERNAL_PAGES         = YES
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool
