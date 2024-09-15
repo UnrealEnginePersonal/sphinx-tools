@@ -2,7 +2,6 @@ from typing import Dict, List
 
 
 class ThemeSettings:
-
     def __init__(self, theme_name: str,
                  theme_options: Dict[str, str],
                  html_context: Dict[str, str] = None,
@@ -33,7 +32,7 @@ Book = ThemeSettings(
         "repository_url": "https://github.com/kiwi-lang/Documentation"
     },
     html_context={
-        "default_mode": "light"
+        "default_mode": "dark"
     },
     custom_css=[
         'sphinx_book_theme_custom.css'

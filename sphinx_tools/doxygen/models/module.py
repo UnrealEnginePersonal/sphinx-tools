@@ -1,35 +1,15 @@
-import copy
 import importlib.resources as resources
 import os
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict
 
-from bs4 import BeautifulSoup
-
-import sphinx_tools.doxygen.utils.path as path_util
 from sphinx_tools.version import get_version
 
 
-@dataclass
-class Conf:
-    doxygen_out = None
-    docs_src = None
-    api_out = None
-    projects = dict()
-
-
-conf = Conf
-# Set up configuration paths
-conf_base_dir = 'E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/'
-conf.doxygen_out = conf_base_dir
-conf.docs_src = conf_base_dir
-conf.api_out = conf_base_dir
-
-
 class Doxygen:
-    values = {
+    values: Dict[str, str] = {
         '@DOXYGEN_OUTPUT_DIR@': 'build',
         '@CMAKE_SOURCE_DIR@': '',
         '@PROJECT_NAME@': '',
@@ -37,17 +17,17 @@ class Doxygen:
         '@TAG_FILES@': '',
         '@GENERATE_HTML@': 'YES',
         '@PROJECT_TAG_FILE@': '',
-        '@SOURCES@': '',
-        '@IMAGE_PATH@': '',
+        '@SOURCES@': ''
     }
 
     def generate_config(self) -> str:
         """
         Generate a temp Doxygen configuration file from the template
 
-        :return: The path to the generated file
+        Returns:
+            The path to the temp generated configuration file
         """
-        # Use importlib.resources to access the Doxyfile.in template
+        # Use importlib.resources to access the Dotfile.in template
         with resources.open_text(__package__, 'Doxyfile.in') as file:
             filedata = file.read()
 
@@ -64,35 +44,96 @@ class Doxygen:
 
         return file_path
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run Doxygen with the generated configuration file
+
+        Returns:
+            None
+        """
         temp_file_path = self.generate_config()
         subprocess.call(f'doxygen {temp_file_path}', shell=True)
         os.remove(temp_file_path)
 
 
+
+from sphinx_tools.doxygen.utils import path as path_util
+
 @dataclass
 class Module:
+    from sphinx_tools.doxygen.models.config_module_export import ConfigModuleExport
+
     name: str
     cat: List[str]
     path: str
     sources: List[str]
-    files: List[str] = field(default_factory=list)
+
+    succesfull_generated_api_files: List[str] = field(default_factory=list)
+    export_config: ConfigModuleExport = field(default_factory=ConfigModuleExport)
 
     @property
-    def output(self) -> str:
-        return path_util.join(conf.doxygen_out, *self.cat, self.name)
+    def doxygen_out_path(self) -> str:
+        """
+        Get the path to the Doxygen output directory for the module
+
+        Returns:
+            The path to the Doxygen output directory for the module
+        """
+        return path_util.join(self.export_config.doxygen_out, *self.cat, self.name)
 
     @property
-    def tagfile(self) -> str:
-        return path_util.join(self.output, '_'.join(self.cat + [self.name]) + '.tag')
+    def tagfile_path(self) -> str:
+        """
+        Get the path to the tag file for the module
 
-    @staticmethod
-    def generate_tagfile_str(files: List[str]) -> str:
+        Returns:
+            The path to the tag file
+        """
+        return path_util.join(self.doxygen_out_path, '_'.join(self.cat + [self.name]) + '.tag')
+
+    @property
+    def doxygen_xml_path(self) -> str:
+        """
+        Get the path to the Doxygen XML output file
+
+        Returns:
+            The path to the Doxygen XML output file
+        """
+        return path_util.join(self.doxygen_out_path, 'xml')
+
+    @property
+    def doxygen_xml_index_path(self) -> str:
+        """
+        Get the path to the Doxygen XML index file
+
+        Returns:
+            The path to the Doxygen XML index file
+        """
+        return path_util.join(self.doxygen_xml_path, 'index.xml')
+
+    @property
+    def parent_plugin_dir(self) -> str:
+        return path_util.join(self.export_config.module_api_out, *self.cat)
+
+    @property
+    def base_module_api_dir(self) -> str:
+        return path_util.join(self.parent_plugin_dir, self.name)
+
+    @property
+    def index_rst(self) -> str:
+        index_rst_name: str = self.name +'_index.rst'
+        return path_util.join(self.parent_plugin_dir, index_rst_name)
+
+    def generate_tagfile_str(self, files: List[str]) -> str:
         """
         Generate a string for the TAGFILES doxygen configuration option
 
+        This will generate a string that includes all the tag files provided in the list, in the format required by
+        the Doxygen configuration file.
+
+
         Args:
-            files: A list of tag files to include in the configuration
+            files (List[str]): A list of tag files to include in the configuration
 
         Returns:
             A string for the TAGFILES configuration option, and empty string if no files are provided
@@ -108,168 +149,106 @@ class Module:
             return "TAGFILES  = "
 
         if len(files) == 1:
-            return f"TAGFILES  = {files[0]}=."
+            # check if the tagfile is the same as the project tagfile
+            if files[0] == self.tagfile_path:
+                return f"TAGFILES  ="
+            else:
+                return f"TAGFILES  = {files[0]}"
+
+        if files[0] == self.tagfile_path:
+            files = files[1:]
+
         result: str = "TAGFILES  = " + files[0] + "\n"
         for file in files[1:]:
+            if file == self.tagfile_path:
+                continue
             result += f"TAGFILES  += {file}\n"
 
         return result
 
+
+    def generate_input_str(self, inputs: List[str]) -> str:
+        """
+        Generate a string for the INPUT doxygen configuration option
+
+        This will generate a string that includes all the input directories provided in the list, in the format required
+        by the Doxygen configuration file.
+
+
+        Args:
+            inputs (List[str]): A list of input directories to include in the configuration
+
+        Returns:
+            A string for the INPUT configuration option, and empty string if no directories are provided
+
+        Example:
+            >>> Module.generate_input_str(['dir0', 'dir1', 'dir2', 'dir3'])
+            INPUT  = "dir0" \n
+            INPUT  += "dir1" \n
+            INPUT  += "dir2" \n
+            INPUT  += "dir3" \n
+        """
+        result: str = "INPUT  = " + inputs[0] + "\n"
+
+        for in_file in inputs[1:]:
+            result += f"INPUT  += {in_file}\n"
+
+        return result
+
     def doxygen(self, tag: bool = True, other_tag_files: List[str] = None) -> Doxygen:
-        tag_files_conf: str = self.generate_tagfile_str(other_tag_files)
+        """"
+        Generate a Doxygen config data object for the module.
+
+
+        Args:
+            tag: Whether to generate a tag file for the module
+            other_tag_files: A list of other tag files to include in the configuration
+
+        Returns:
+            A Doxygen object for the module
+        """
 
         doxy: Doxygen = Doxygen()
-        doxy.values['@DOXYGEN_OUTPUT_DIR@'] = self.output
+        doxy.values['@DOXYGEN_OUTPUT_DIR@'] = self.doxygen_out_path
         doxy.values['@CMAKE_SOURCE_DIR@'] = self.path
         doxy.values['@PROJECT_NAME@'] = self.name
         doxy.values['@rev_branch@'] = get_version()
+
+        tag_files_conf: str = self.generate_tagfile_str(other_tag_files)
         doxy.values['@TAG_FILES@'] = tag_files_conf
+
         doxy.values['@GENERATE_HTML@'] = 'NO' if tag else 'YES'
-        doxy.values['@PROJECT_TAG_FILE@'] = self.tagfile if tag else ''
-        doxy.values['@SOURCES@'] = ' '.join(self.sources)
-        doxy.values['@IMAGE_PATH@'] = path_util.join(conf.docs_src, '_static')
+        doxy.values['@PROJECT_TAG_FILE@'] = self.tagfile_path if tag else ''
+        #doxy.values['@SOURCES@'] = ' '.join(self.sources)
+
+        source_conf: str = self.generate_input_str(self.sources)
+        doxy.values['@SOURCES@'] = source_conf
+
         return doxy
 
-    def generate_documentation(self, gen_doxygen=False, other_tag_files:List[str] =None) -> None:
+    def generate_documentation(self,
+                               gen_doxygen=False, other_tag_files: List[str] = None, second_pass: bool = False)  -> 'Module':
+        """
+        Generate the documentation for the module
+
+        This will generate the Doxygen documentation for the module if gen_doxygen is True, and generate the API documentation
+        if this is the second pass of the documentation generation.
+
+        Args:
+            gen_doxygen: Whether to generate Doxygen documentation
+            other_tag_files: A list of other tag files to include in the configuration
+            second_pass: If this is the second pass of the documentation generation
+
+        Returns:
+             self: The current instance of the Module class
+        """
         if gen_doxygen:
+            path_util.recreate_dir(self.doxygen_out_path)
             dox: Doxygen = self.doxygen(other_tag_files=other_tag_files)
-            if not path_util.exists(self.output):
-                os.makedirs(self.output, exist_ok=True)
             dox.run()
 
-        GeneratorFilePerClass(self).generate_api()
+        if second_pass:
+            from sphinx_tools.doxygen.generators.generator_per_file import GeneratorFilePerClass
+            GeneratorFilePerClass(self).generate_api()
 
-    @property
-    def index_dir(self) -> str:
-        return path_util.join(conf.api_out, *self.cat)
-
-    @property
-    def index(self) -> str:
-        return path_util.join(self.index_dir, self.name + '.rst')
-
-
-KIND_TO_DIRECTIVE = {
-    'class': 'doxygenclass',
-    'struct': 'doxygenstruct',
-    'define': 'doxygendefine',
-    'enum': 'doxygendenum',
-    'function': 'doxygenfunction',
-    'interface': 'doxygeninterface',
-    'typedef': 'doxygentypedef',
-    'union': 'doxygenunion',
-    'variable': 'doxygenvariable'
-}
-
-DOXYGEN_CLASS = """
-{name}
-{border}
-
-.. {directive}:: {name}
-   :project: {project}
-   :protected-members:
-   :private-members:
-   :undoc-members:
-"""
-
-DOXYGEN_TOCTREE = """
-{name}
-{border}
-
-.. toctree::
-   :maxdepth: 1
-
-{files}
-"""
-
-DOXYGEN_TOCTREE_GLOB = """
-{cat}
-{border}
-
-.. toctree::
-   :maxdepth: 2
-   :glob:
-
-   {cat}/*
-
-"""
-
-
-class GeneratorFilePerClass:
-    def __init__(self, module: Module) -> None:
-        self.mod = module
-
-    def generate_api(self):
-        print(f'Generating API rst from xml for {self.mod.name}')
-
-        xml_dir = path_util.join(self.mod.output, 'xml')
-        xml_index = path_util.join(xml_dir, 'index.xml')
-
-        try:
-            with open(xml_index, 'r') as f:
-                index = BeautifulSoup(f, "xml")
-        except FileNotFoundError:
-            print(f"Missing XML file passing {xml_index}")
-            return
-
-        base_dir: str = path_util.join(
-            conf.api_out,
-            *self.mod.cat,
-            self.mod.name,
-        )
-
-        os.makedirs(base_dir, exist_ok=True)
-
-        for comp in index.find_all("compound"):
-            kind = comp.get('kind')
-
-            if kind in ('file', 'dir'):
-                continue
-
-            name_tag = comp.find("name")
-            name = name_tag.contents[0]
-
-            file: str = path_util.join(base_dir, name + '.rst')
-            self.mod.files.append(file)
-
-            try:
-                with open(file, 'w') as out:
-                    directive = KIND_TO_DIRECTIVE.get(kind, 'doxygenclass')
-                    out.write(DOXYGEN_CLASS.format(
-                        name=name,
-                        border='=' * len(name),
-                        project=self.mod.name,
-                        directive=directive,
-                    ))
-            except Exception as e:
-                print(f'Error writing file {file}: {e}')
-
-        path: str = path_util.join(conf.api_out, *self.mod.cat)
-
-        # get all the files map(lambda s: '   ' + s.replace('.rst', '').replace(path + '/', ''), self.mod.files))
-        # remove .rst and path from the file name
-        path += '/'
-        files = '\n'.join(map(lambda s: '   ' + s.replace('.rst', '').replace(path, ''), self.mod.files))
-
-        # replace \ with / in the path
-        files = files.replace('\\', '/')
-
-        mod_index: str = self.mod.index
-        print('mod_index -----------------')
-        print(mod_index)
-
-        with open(self.mod.index, 'w') as index:
-            index.write(DOXYGEN_TOCTREE.format(
-                name=self.mod.name,
-                border='=' * len(self.mod.name),
-                files=files,
-            ))
-
-        cats = copy.deepcopy(self.mod.cat)
-        while cats:
-            cat = cats.pop()
-            toc_tree_file_str = path_util.join(conf.api_out, *cats, cat + '.rst')
-            print('toc_tree_file_str -----------------')
-            print(toc_tree_file_str)
-
-            with open(toc_tree_file_str, 'w') as f:
-                f.write(DOXYGEN_TOCTREE_GLOB.format(cat=cat, border='=' * len(cat)))
+        return self

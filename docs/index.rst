@@ -1,25 +1,23 @@
 .. include:: ../README.rst
 
 .. toctree::
-   :caption: ALS
-   :maxdepth: 2
+    :maxdepth: 2
+    :caption: Contents:
 
-   ALS
+    api/KdsCharacter/KdsCharacter_index
+    api/KdsCharacter/KdsEditorModule_index
+    api/ALS/ALS_index
+    api/ALS/ALSCamera_index
+    api/ALS/ALSEditor_index
+    api/ALS/ALSExtras_index
+    api/KdsEditorPlugin/KdsEditorPlugin_index
+    api/KdsLogging/KdsLogging_index
+    api/KdsMacroLib/KdsMacroLib_index
+    api/RiderLink/RiderLink_index
+    api/RiderLink/RiderBlueprint_index
+    api/RiderLink/RiderGameControl_index
 
-.. toctree::
-   :caption: KdsCharacter
-   :maxdepth: 2
 
-   KdsCharacter
-
-.. toctree::
-   :caption: KdsEditorPlugin
-   :maxdepth: 2
-
-   KdsEditorPlugin
-
-.. toctree::
-   :caption: KdsLogging
-   :maxdepth: 2
-
-   KdsLogging
+.. _genindex:
+.. _modindex:
+.. _search:

@@ -1,102 +1,77 @@
-import glob
-from typing import List
-
-
 import os.path as ospath
 import sys
 
 sys.path.append(ospath.abspath(ospath.join(ospath.dirname(__file__), '..')))
 
-import utils.path
-from models.plugin_model import PluginModel
-from models.module import Module
+import glob
+from typing import List
+from sphinx_tools.doxygen.models.plugin import PluginModel
+from sphinx_tools.doxygen.utils import path as utils
 
 
-def extract_category(frags: List[str], start_tag: str, end_tag: str) -> List[str]:
-    cat: List[str] = []
-    cat_started:bool = False
-
-    for frag in frags:
-        if frag == start_tag:
-            cat_started = True
-            continue
-
-        if frag == end_tag:
-            break
-
-        if cat_started:
-            cat.append(frag)
-
-    return cat
-
-
-def find_modules(project_root: str) -> List[Module]:
-    project_root:str = utils.path.abspath(project_root)
-
-    if not utils.path.exists(project_root):
-        raise FileNotFoundError(f'Project root {project_root} does not exist')
-
-    if not utils.path.isdir(project_root):
-        raise NotADirectoryError(f'Project root {project_root} is not a directory')
-
-    if project_root.endswith('Source'):
-        project_root:str = utils.path.abspath(utils.path.join(project_root, '..'))
-
-    src:str = utils.path.join(project_root, 'Source')
-
-    for path in glob.iglob(f'{src}/**/Public', recursive=True):
-
-        path:str = path.replace('\\', '/')
-
-        frags:List[str] = path.split('/')
-        name:str = frags[-2]
-        module:str = utils.path.abspath(utils.path.join(path, '..'))
-
-        cat:List[str] = extract_category(frags, 'Source', name)
-
-        if not cat:
-            cat = [name]
-
-        yield Module(name, cat, module, [
-            utils.path.join(module, 'Public'),
-            utils.path.join(module, 'Private')
-        ])
-
-
-def find_plugins(project_root):
-    src = utils.path.join(project_root, 'Plugins')
+def find_plugins(project_root) -> List[PluginModel]:
+    src = utils.join(project_root, 'Plugins')
 
     for path in glob.iglob(f'{src}/**/Source', recursive=True):
-        frags:List[str] = path.replace('\\', '/').split('/')
-        path:str = path.replace('\\', '/')
-        name:str = frags[-2]
+        frags: List[str] = path.replace('\\', '/').split('/')
+        path: str = path.replace('\\', '/')
+        name: str = frags[-2]
 
-        modules: List[Module] = find_modules(path)
-
-        yield PluginModel(name=name, path=path, modules=modules)
+        yield PluginModel(name=name, source_path=path)
 
 
 def test_plugins(plugins_to_skip: List[str] = None):
-    namespaces = set()
-    tag_files: List[str] = []
+    if plugins_to_skip is None:
+        plugins_to_skip = []
 
-    for i in find_plugins('E:/_00_blackdog/Docs/TestDocProject'):
-        if plugins_to_skip and i.name in plugins_to_skip:
-            print('skipping ', i.name)
+    _base_dir = 'E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools'
+
+    _doxygen_dir = utils.join(_base_dir, 'generated')
+    _api_dir = utils.join(_base_dir, 'docs', 'api')
+    _api_dir = utils.abspath(_api_dir)
+    _build_dir = utils.join(_base_dir, 'docs', '_build')
+
+    utils.remove_dir(_doxygen_dir)
+    utils.remove_dir(_api_dir)
+    utils.remove_dir(_build_dir)
+
+    generated_tag_files = []
+    generated_plugins: List[PluginModel] = []
+
+    for plugin in find_plugins('E:/_00_blackdog/Docs/TestDocProject'):
+        print('=='.center(200, '='))
+
+        if plugins_to_skip and plugin.name in plugins_to_skip:
+            print('skipping ', plugin.name)
             continue
 
-        for module in find_modules(i.path):
-            module.cat = [i.name]
-            print('         module  : ', module.name, ' at path ', module.path, ' in plugin ', i.name)
-            print('         cat     : ', module.cat)
-            print('         tag_file: ', module.tagfile)
-            print('         output  : ', module.output)
+        print('plugin: ', plugin.name, ' at path ', plugin.source_path)
 
-            namespaces.add('/'.join(module.cat))
-            module.generate_documentation(gen_doxygen=True, other_tag_files=tag_files)
+        plugin.generate_api_docs(external_tag_files=generated_tag_files)
+        generated_tag_files = plugin.generated_tag_files
+        generated_plugins.append(plugin)
 
-            tag_files.append(module.tagfile)
+        print('=='.center(250, '='))
+
+    print('generated_plugins: ', generated_plugins)
+
+
+    print('=='.center(1000, '='))
+    print('=='.center(1000, '='))
+    print('=='.center(1000, '='))
+    print('SECOND PASS'.center(1000, '='))
+    print('=='.center(1000, '='))
+    print('=='.center(1000, '='))
+    #swap the order of the plugins
+    generated_plugins.reverse()
+
+    for plugin in generated_plugins:
+        print('=='.center(250, '='))
+        print('plugin: ', plugin.name, ' at path ', plugin.source_path)
+        plugin.generate_api_docs(external_tag_files=generated_tag_files, second_pass=True)
+        print('=='.center(250, '='))
+
 
 
 if __name__ == '__main__':
-    test_plugins(plugins_to_skip=['KdsLogging', 'KdsMacroLib', 'RiderLink'])
+    test_plugins(plugins_to_skip=[])

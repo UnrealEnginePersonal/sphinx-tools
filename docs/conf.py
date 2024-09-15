@@ -12,7 +12,13 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import theme_settings
+import os.path
+import sys
+
+file_path = os.path.abspath(__file__)
+sys.path.insert(0, os.path.dirname(os.path.dirname(file_path)))
+
+from docs import _build_configs_
 
 # import sphinx_wagtail_theme
 
@@ -20,7 +26,7 @@ import theme_settings
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-PROJECT_FINAL_NAME = "ALSSixeBlackImpl"
+PROJECT_FINAL_NAME = "KASPERS APIS"
 PROJECT_COPYRIGHT = "2021, Kasper de Bruin"
 PROJECT_AUTHOR = "Kasper de Bruin"
 
@@ -42,49 +48,51 @@ extensions = [
     "sphinx.ext.mathjax",
     'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
-    "breathe",
-    "exhale",
+    "breathe"
 ]
 
 # Breathe Configuration
-breathe_default_project = "ALS"
 
 breathe_default_members = (
     "members",
-    "undoc-members",
     "protected-members",
-    "private-member",
+    "private-members",
+    "undoc-members",
 )
+
+breathe_doxygen_aliases = {
+    'rstref{1}': r'\verbatim embed:rst:inline :ref:`\1` \endverbatim'
+}
+
+breathe_show_include = True
 breathe_show_define_initializer = True
 breathe_show_enumvalue_initializer = True
-
-breathe_projects = {
-    "ALS": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALS/xml",
-    "ALSCamera": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSCamera/xml",
-    "ALSEditor": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSEditor/xml",
-    "ALSExtras": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/ALS/ALSExtras/xml",
-
-    "KdsCharacter": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/KdsCharacter/KdsCharacter/xml",
-    "KdsEditorModule": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/KdsCharacter/KdsEditorModule/xml",
-
-    "KdsEditorPlugin": "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/docs/KdsEditorPlugin/KdsEditorPlugin/xml",
-}
 
 breathe_domain_by_extension = {
     "usf": "cpp",
 }
 
-exhale_args = {
-    # These arguments are required
+breath_source_projects_source = "E:/_00_blackdog/Docs/TestDocProject/Tools/sphinx_tools/generated/doxygen"
 
-    "containmentFolder": "_build/exhale",  # We put exhale ioutside because we just use it as scafolding
-    "rootFileName": f"{breathe_default_project}_API.rst",
-    "rootFileTitle": f"{breathe_default_project} API",
-    "doxygenStripFromPath": "..",
-    # Suggested optional arguments
-    "createTreeView": True,
-    "exhaleExecutesDoxygen": False,
+breathe_projects = {
+    "KdsCharacter": f"{breath_source_projects_source}/KdsCharacter/KdsCharacter/xml",
+    "KdsEditorModule": f"{breath_source_projects_source}/KdsCharacter/KdsEditorModule/xml",
+
+    "ALS": f"{breath_source_projects_source}/ALS/ALS/xml",
+    "ALSCamera": f"{breath_source_projects_source}/ALS/ALSCamera/xml",
+    "ALSEditor": f"{breath_source_projects_source}/ALS/ALSEditor/xml",
+    "ALSExtras": f"{breath_source_projects_source}/ALS/ALSExtras/xml",
+
+    "KdsEditorPlugin": f"{breath_source_projects_source}/KdsEditorPlugin/KdsEditorPlugin/xml",
+    "KdsLogging": f"{breath_source_projects_source}/KdsLogging/KdsLogging/xml",
+    "KdsMacroLib": f"{breath_source_projects_source}/KdsMacroLib/KdsMacroLib/xml",
+
+    "RiderLink": f"{breath_source_projects_source}/RiderLink/RiderLink/xml",
+    "RiderBlueprint": f"{breath_source_projects_source}/RiderLink/RiderBlueprint/xml",
+    "RiderGameControl": f"{breath_source_projects_source}/RiderLink/RiderGameControl/xml",
 }
+
+breathe_default_project = "ALS"
 
 # Tell sphinx what the primary language being documented is.
 primary_domain = "cpp"
@@ -137,7 +145,7 @@ language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ['_build', '**/pptree.py', '_build_configs_']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -186,11 +194,11 @@ html_logo = f"_static/nf-logo-120x120.png"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_theme = theme_settings.CURRENT_THEME.theme_name
-html_theme_options = theme_settings.CURRENT_THEME.theme_options
-html_css_files = theme_settings.CURRENT_THEME.custom_css
-html_context = theme_settings.CURRENT_THEME.html_context
-html_show_copyright = theme_settings.CURRENT_THEME.show_copyright
+html_theme = _build_configs_.CURRENT_THEME.theme_name
+html_theme_options = _build_configs_.CURRENT_THEME.theme_options
+html_css_files = _build_configs_.CURRENT_THEME.custom_css
+html_context = _build_configs_.CURRENT_THEME.html_context
+html_show_copyright = _build_configs_.CURRENT_THEME.show_copyright
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -455,7 +463,7 @@ texinfo_documents = [
 # # List of patterns, relative to source directory, that match files and
 # # directories to ignore when looking for source files.
 # # This patterns also effect to html_static_path and html_extra_path
-# exclude_patterns = ['_build', '**/pptree.py']
+#
 #
 # # The name of the Pygments (syntax highlighting) style to use.
 # pygments_style = 'sphinx'
